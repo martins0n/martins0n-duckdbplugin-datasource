@@ -1,5 +1,5 @@
 import React from 'react';
-import { InlineField, Input, HorizontalGroup, InlineFieldRow, Button, Card } from '@grafana/ui';
+import { InlineField, Input, HorizontalGroup, InlineFieldRow, Button } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions } from '../types';
 
@@ -38,10 +38,10 @@ export function ConfigEditor(props: Props) {
       {parsedOptions.map((option) => (
         <InlineFieldRow key={option.id}>
           <InlineField label={'URL'} tooltip='Add link to csv file'>
-            <Input label={'URL'} value={option.url} onChange={(event) => onURLChange(option.id, event.target.value)} />
-          </InlineField>
-          <InlineField label={'Table name'} tooltip='Table name to be used in queries'>
-            <Input label={'alias'} value={option.alias} onChange={(event) => onAliasChange(option.id, event.target.value)} />
+              <Input label={'URL'} value={option.url} onChange={(event) => onURLChange(option.id, (event.target as HTMLInputElement).value)} />
+            </InlineField>
+            <InlineField label={'Table name'} tooltip='Table name to be used in queries'>
+              <Input label={'alias'} value={option.alias} onChange={(event) => onAliasChange(option.id, (event.target as HTMLInputElement).value)} />
           </InlineField>
         </InlineFieldRow>
       ))}
