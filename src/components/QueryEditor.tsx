@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineSwitch, QueryField } from '@grafana/ui';
+import { QueryField } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
@@ -11,14 +11,11 @@ function cleanMultilineString(str: string) {
 }
 
 export function QueryEditor({ query, onChange, onRunQuery }: Props) {
-  const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, queryText: event.target.value });
+  const onQueryTextChange = (event: string) => {
+    onChange({ ...query, queryText: event });
   };
-  const onLongFormatChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, long: event.target.checked });
-    onRunQuery();
-  }
-  const { queryText, long } = query;
+
+  const { queryText } = query;
 
   const dummyQuery = cleanMultilineString(`
     select
@@ -29,7 +26,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   `);
 
   if (!queryText) {
-    onChange({ ...query, queryText: dummyQuery, long: true});
+    onChange({ ...query, queryText: dummyQuery});
     onRunQuery();
   }
 
@@ -37,9 +34,6 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
     <div className="gf-form">
       <div>
         <QueryField query={queryText || dummyQuery} onChange={onQueryTextChange} />
-      </div>
-      <div>
-        <InlineSwitch label="Long Format" showLabel={true} value={long} transparent={false} onChange={onLongFormatChange}/>
       </div>
     </div>
   );

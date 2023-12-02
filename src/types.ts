@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
   queryText?: string;
@@ -13,6 +13,7 @@ export interface MyQuery extends DataQuery {
 export interface DataFrameLink {
     url: string;
     alias: string;
+    id: number;
 }
 export interface MyDataSourceOptions extends DataSourceJsonData {
   dataFrames?: DataFrameLink[];

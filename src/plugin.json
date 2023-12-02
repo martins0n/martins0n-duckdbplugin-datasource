@@ -1,11 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
-  "name": "Duckdb Plugin",
+  "name": "DuckDB wasm",
   "id": "martins0n-duckdbplugin-datasource",
   "metrics": true,
   "info": {
-    "description": "",
+    "description": "Query files with the DuckDB wasm library.",
     "author": {
       "name": "Martins0n"
     },
