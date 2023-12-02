@@ -1,32 +1,46 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input } from '@grafana/ui';
+import { InlineSwitch, QueryField } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { MyDataSourceOptions, MyQuery } from '../types';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
+function cleanMultilineString(str: string) {
+  return str.replace(/\n\s+/g, '\n').trim();
+}
+
 export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   const onQueryTextChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, queryText: event.target.value });
   };
-
-  const onConstantChange = (event: ChangeEvent<HTMLInputElement>) => {
-    onChange({ ...query, constant: parseFloat(event.target.value) });
-    // executes the query
+  const onLongFormatChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, long: event.target.checked });
     onRunQuery();
-  };
+  }
+  const { queryText, long } = query;
 
-  const { queryText, constant } = query;
+  const dummyQuery = cleanMultilineString(`
+    select
+      current_date() - to_days(n::int) as timestamp,
+      case when n % 2 = 0 then 'btc' else 'eth' end as segment,
+      random() * 100 as target
+    from generate_series(1, 100) tbl(n);
+  `);
+
+  if (!queryText) {
+    onChange({ ...query, queryText: dummyQuery, long: true});
+    onRunQuery();
+  }
 
   return (
     <div className="gf-form">
-      <InlineField label="Constant">
-        <Input onChange={onConstantChange} value={constant} width={8} type="number" step="0.1" />
-      </InlineField>
-      <InlineField label="Query Text" labelWidth={16} tooltip="Not used yet">
-        <Input onChange={onQueryTextChange} value={queryText || ''} />
-      </InlineField>
+      <div>
+        <QueryField query={queryText || dummyQuery} onChange={onQueryTextChange} />
+      </div>
+      <div>
+        <InlineSwitch label="Long Format" showLabel={true} value={long} transparent={false} onChange={onLongFormatChange}/>
+      </div>
     </div>
   );
 }

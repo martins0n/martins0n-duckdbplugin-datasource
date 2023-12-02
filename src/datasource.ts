@@ -16,9 +16,6 @@ import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm';
 // @ts-ignore
 import duckdb_wasm_next from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm';
 
-// @ts-ignore
-let db: duckdb.DuckDB | null = null;
-
 async function createDuckDB() {
   console.log('createDuckDB');
 
@@ -50,7 +47,6 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
     this.dataFrames = instanceSettings.jsonData.dataFrames || [];
-    this.init();
   }
 
   async init() {
@@ -74,84 +70,78 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-    console.log(this)
-    const { range } = options;
-    const from = range!.from.toISOString();
-    const to = range!.to.toISOString();
-
     if (!this.db) {
       await this.init();
     }
     const c = await this.db.connect();
 
-    let timestampFilter = '';
-    if (from) {
-        timestampFilter += ` and timestamp >= '${from}'`;
-    }
-    if (to) {
-        timestampFilter += ` and timestamp <= '${to}'`;
-    }
+    const data = await this.createRawDataFrames(c, options.targets);
+    await c.close();
+    return { data };
+  }
 
-
-    async function dataPrepare(targets: MyQuery[]){
-      const query = targets[0].queryText;
-      let result = await c.query(`
+  async createRawDataFrames(c, targets: MyQuery[]) {
+    let dataFrames = [];
+    for (const target of targets) {
+      const query = target.queryText;
+      const result = await c.query(`
         ${query}
-        WHERE 1=1
-          ${timestampFilter}
       `);
-      result = result.toArray().map((row) => row.toJSON());
+      const data = result.toArray()
+      const grouped = {};
+      data.forEach(item => {
+        let value = item.toJSON();
+        for (const key of Object.keys(value)) {
+          if (!grouped[key]) {
+            grouped[key] = [];
+          }
+          grouped[key].push(value[key]);
+        }
+      }
+      )
+      dataFrames.push(new MutableDataFrame({
+        refId: target.refId,
+        fields: Object.keys(grouped).map((key) => {
+          return { name: key, values: grouped[key] };
+        })
+      }));
+
+    }
+    return dataFrames;
+  }
+
+  async createPivotDataFrames(c, targets: MyQuery[]) {
+    let dataFrames = [];
+    for (const target of targets) {
+      const query = target.queryText;
+      const result = await c.query(`
+        ${query}
+      `);
+      const data = result.toArray().map((row) => row.toJSON());
       const grouped = {};
 
-      result.forEach(item => {
+      data.forEach(item => {
         if (!grouped[item.segment]) {
           grouped[item.segment] = { timestamp: [], segment: item.segment, target: [] };
         }
         grouped[item.segment].timestamp.push(item.timestamp);
         grouped[item.segment].target.push(item.target);
       });
-
-      return Object.values(grouped);
-
+      
+      Object.values(grouped).forEach((x) => {
+        dataFrames.push(new MutableDataFrame({
+          refId: target.refId,
+          fields: [
+            // @ts-ignore
+            { name: 'timestamp', values: x.timestamp, type: FieldType.time },
+            // @ts-ignore
+            { name: x.segment, values: x.target, type: FieldType.number },
+            // @ts-ignore
+          ]
+        }));
+      }
+      );
     }
-
-    const result = await dataPrepare(options.targets);
-
-
-    console.log('result', result);
-
-    
-    console.log('result', result);
-    // Return a constant for each query.
-    console.log('query', options);
-
-    const data = result.map((target) => {
-      return new MutableDataFrame({
-        refId: target.segment,
-
-        fields: [
-          // @ts-ignore
-          { name: 'Time', values: target.timestamp, type: FieldType.time },
-          // @ts-ignore
-          { name: target.segment, values: target.target, type: FieldType.number },
-          // @ts-ignore
-        ]
-      });
-    });
-
-    await c.close();
-
-    console.log('data', data);
-
-
-    return { data };
-  }
-
-  async testDatasource() {
-    // Implement a health check for your data source.
-    return {
-      status: 'success',
-      message: 'Success',
-    };
+    return dataFrames;
   }
 }
