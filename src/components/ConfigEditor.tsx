@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { InlineField, Input, HorizontalGroup, InlineFieldRow, Button, Card } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { MyDataSourceOptions } from '../types';
@@ -8,8 +8,6 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> 
 
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
-
-  // create form with list of fields
 
   const parsedOptions = options.jsonData.dataFrames || [{ id: 1, url: '', alias: '' }]
 

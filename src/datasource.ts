@@ -42,6 +42,7 @@ async function createDuckDB() {
 export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   dataFrames: DataFrameLink[];
+  // @ts-ignore
   db: duckdb.DuckDB;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
@@ -49,14 +50,14 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     this.dataFrames = instanceSettings.jsonData.dataFrames || [];
   }
 
-  async init() {
+  async createConnectionAndTables() {
     this.db = await createDuckDB();
     await this.createTables();
   }
 
   async createTables() {
     if (!this.db) {
-      await this.init();
+      await this.createConnectionAndTables();
     }
     const c = await this.db.connect();
 
@@ -71,7 +72,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
     if (!this.db) {
-      await this.init();
+      await this.createConnectionAndTables();
     }
     const c = await this.db.connect();
 
@@ -80,7 +81,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return { data };
   }
 
-  async createRawDataFrames(c, targets: MyQuery[]) {
+  async createRawDataFrames(c: any, targets: MyQuery[]) {
     let dataFrames = [];
     for (const target of targets) {
       const query = target.queryText;
@@ -89,12 +90,16 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       `);
       const data = result.toArray()
       const grouped = {};
+      // @ts-ignore
       data.forEach(item => {
         let value = item.toJSON();
         for (const key of Object.keys(value)) {
+          // @ts-ignore
           if (!grouped[key]) {
+            // @ts-ignore
             grouped[key] = [];
           }
+          // @ts-ignore
           grouped[key].push(value[key]);
         }
       }
@@ -102,6 +107,7 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       dataFrames.push(new MutableDataFrame({
         refId: target.refId,
         fields: Object.keys(grouped).map((key) => {
+          // @ts-ignore
           return { name: key, values: grouped[key] };
         })
       }));
@@ -110,21 +116,27 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     return dataFrames;
   }
 
-  async createPivotDataFrames(c, targets: MyQuery[]) {
+  async createPivotDataFrames(c: any, targets: MyQuery[]) {
+    // @ts-ignore
     let dataFrames = [];
     for (const target of targets) {
       const query = target.queryText;
       const result = await c.query(`
         ${query}
       `);
+      // @ts-ignore
       const data = result.toArray().map((row) => row.toJSON());
       const grouped = {};
-
+      // @ts-ignore
       data.forEach(item => {
+        // @ts-ignore
         if (!grouped[item.segment]) {
+          // @ts-ignore
           grouped[item.segment] = { timestamp: [], segment: item.segment, target: [] };
         }
+        // @ts-ignore
         grouped[item.segment].timestamp.push(item.timestamp);
+        // @ts-ignore
         grouped[item.segment].target.push(item.target);
       });
       
@@ -142,6 +154,19 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
       }
       );
     }
+    // @ts-ignore
     return dataFrames;
+  }
+
+  async testDatasource() {
+    if (!this.db) {
+      await this.createConnectionAndTables();
+    }
+    const c = await this.db.connect();
+    await c.close();
+    return {
+      status: 'success',
+      message: 'Success',
+    };
   }
 }

@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React from 'react';
 import { QueryField } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
@@ -33,7 +33,7 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   return (
     <div className="gf-form">
       <div>
-        <QueryField query={queryText || dummyQuery} onChange={onQueryTextChange} />
+        <QueryField query={queryText || dummyQuery} onChange={onQueryTextChange} portalOrigin={''} />
       </div>
     </div>
   );
