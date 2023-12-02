@@ -1,3 +1,8 @@
 {
-  "extends": "./.config/tsconfig.json"
+  "extends": "./.config/tsconfig.json",
+  "compilerOptions": {
+    "target": "es2017", // or higher like es2020, esnext
+    "module": "esnext", // or es2022, system, node16, nodenext
+    // ... other options ...
+    }
 }

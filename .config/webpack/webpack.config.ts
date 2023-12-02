@@ -104,6 +104,10 @@ const config = async (env): Promise<Configuration> => {
           use: ['style-loader', 'css-loader', 'sass-loader'],
         },
         {
+            test: /\.wasm$/,
+            type: "asset/inline",
+        },
+        {
           test: /\.(png|jpe?g|gif|svg)$/,
           type: 'asset/resource',
           generator: {
@@ -137,6 +141,10 @@ const config = async (env): Promise<Configuration> => {
       path: path.resolve(process.cwd(), DIST_DIR),
       publicPath: `public/plugins/${pluginJson.id}/`,
       uniqueName: pluginJson.id,
+    },
+
+    experiments: {
+        asyncWebAssembly: true,
     },
 
     plugins: [
