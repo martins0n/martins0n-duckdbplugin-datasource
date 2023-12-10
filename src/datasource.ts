@@ -17,7 +17,7 @@ import duckdb_wasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm';
 import duckdb_wasm_next from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm';
 
 async function createDuckDB() {
-  console.log('createDuckDB');
+  console.log('DuckDB-Wasm is loading...');
 
   const MANUAL_BUNDLES: duckdb.DuckDBBundles = {
     mvp: {
@@ -43,7 +43,8 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
 
   dataFrames: DataFrameLink[];
   // @ts-ignore
-  db: duckdb.DuckDB;
+  static db: duckdb.DuckDB = null;
+  static isDbInitializing = false;
 
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
@@ -51,30 +52,54 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   async createConnectionAndTables() {
-    this.db = await createDuckDB();
-    await this.createTables();
+    if (!DataSource.db) {
+      if (!DataSource.isDbInitializing) {
+        DataSource.isDbInitializing = true;
+        DataSource.db = await createDuckDB();
+        try {
+          await this.createTables();
+        } catch (e) {
+          DataSource.db = null;
+          console.error(e);
+        }
+        DataSource.isDbInitializing = false;
+      } else {
+        while (!DataSource.db) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+      }
+    }
   }
 
   async createTables() {
-    if (!this.db) {
+    if (!DataSource.db) {
       await this.createConnectionAndTables();
     }
-    const c = await this.db.connect();
+    const c = await DataSource.db.connect();
 
+    let errors = [];
     for (const dataFrame of this.dataFrames) {
-      await c.query(`
-        CREATE TABLE IF NOT EXISTS '${dataFrame.alias}'
-        AS (SELECT * FROM '${dataFrame.url}')
-      `);
+      try{
+        await c.query(`
+          CREATE TABLE IF NOT EXISTS '${dataFrame.alias}'
+          AS (SELECT * FROM '${dataFrame.url}')
+        `);
+      } catch (e) {
+        console.error(e);
+        errors.push(e);
+      }
+    }
+    if (errors.length > 0) {
+      throw errors;
     }
     await c.close();
   }
 
   async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
-    if (!this.db) {
+    if (!DataSource.db) {
       await this.createConnectionAndTables();
     }
-    const c = await this.db.connect();
+    const c = await DataSource.db.connect();
 
     const data = await this.createRawDataFrames(c, options.targets);
     await c.close();
@@ -159,10 +184,10 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
   }
 
   async testDatasource() {
-    if (!this.db) {
+    if (!DataSource.db) {
       await this.createConnectionAndTables();
     }
-    const c = await this.db.connect();
+    const c = await DataSource.db.connect();
     await c.close();
     return {
       status: 'success',

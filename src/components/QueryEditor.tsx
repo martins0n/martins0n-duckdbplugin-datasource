@@ -31,8 +31,8 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   }
 
   return (
-    <div className="gf-form">
-      <div>
+    <div className="gf-form" style={{ height: '100%', width: '100%' }}>
+      <div style={{ height: '100%', width: '100%' }}>
         <QueryField query={queryText || dummyQuery} onChange={onQueryTextChange} portalOrigin={''} />
       </div>
     </div>
