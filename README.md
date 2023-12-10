@@ -6,6 +6,15 @@ Remove any remaining comments before publishing as these may be displayed on Gra
 
 Query files with the DuckDB wasm library.
 
+[Demo](https://grafana.lab.martins0n.com/public-dashboards/f30474183ee1417e967b4e4dc280a8d2)
+![Alt text](assets/dash.png)
+
+Data Source:
+![Alt text](assets/datasource.png)
+
+![Alt text](assets/datasource-1.png)
+
+
 <!-- To help maximize the impact of your README and improve usability for users, we propose the following loose structure:
 
 **BEFORE YOU BEGIN**
