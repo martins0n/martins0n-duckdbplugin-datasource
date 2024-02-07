@@ -6,7 +6,7 @@ Remove any remaining comments before publishing as these may be displayed on Gra
 
 Query files with the DuckDB wasm library.
 
-[Demo](https://grafana.lab.martins0n.com/public-dashboards/f30474183ee1417e967b4e4dc280a8d2)
+<!-- [Demo](https://grafana.lab.martins0n.com/public-dashboards/f30474183ee1417e967b4e4dc280a8d2) -->
 ![Alt text](assets/dash.png)
 
 Data Source:
